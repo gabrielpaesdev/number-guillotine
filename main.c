@@ -3,6 +3,7 @@
 #include <time.h>
 
 #define MAX_NUM 100
+#define BUILD_VERSION "v1.1.1"
 
 GtkWidget *window;
 GtkWidget *stack;
@@ -10,6 +11,7 @@ GtkWidget *buttons[MAX_NUM+1];
 GtkWidget *label_info;
 GtkWidget *label_tries;
 GtkWidget *label_gameover;
+GtkWidget *label_copyright;
 
 int secret;
 int min = 1, max = MAX_NUM;
@@ -27,7 +29,8 @@ void load_css() {
         "button:hover { background: #444444; }\n"
         ".title { font-size: 32px; font-weight: bold; }\n"
         ".info { font-size: 20px; color: #00ffaa; }\n"
-        ".danger { font-size: 28px; color: #ff5555; }\n",
+        ".danger { font-size: 28px; color: #ff5555; }\n"
+        ".copyright { font-size: 12px; color: #888888; }\n",
         -1, NULL);
 
     gtk_style_context_add_provider_for_screen(
@@ -143,6 +146,19 @@ void start_hard(GtkWidget *w, gpointer data)  { start_game(4); }
 
 /* ---------- TELAS ---------- */
 
+// Função auxiliar para criar box principal + copyright
+GtkWidget* create_box_with_copyright(GtkWidget *main_content) {
+    GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+    gtk_box_pack_start(GTK_BOX(vbox), main_content, TRUE, TRUE, 0);
+
+    label_copyright = gtk_label_new("© Gabriel Paes 2026");
+    gtk_style_context_add_class(gtk_widget_get_style_context(label_copyright), "copyright");
+    gtk_widget_set_halign(label_copyright, GTK_ALIGN_CENTER);
+
+    gtk_box_pack_start(GTK_BOX(vbox), label_copyright, FALSE, FALSE, 10);
+    return vbox;
+}
+
 GtkWidget* create_menu() {
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 20);
     gtk_widget_set_margin_top(box, 60);
@@ -164,7 +180,7 @@ GtkWidget* create_menu() {
     gtk_box_pack_start(GTK_BOX(box), btn_credits, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(box), btn_exit, FALSE, FALSE, 0);
 
-    return box;
+    return create_box_with_copyright(box);
 }
 
 GtkWidget* create_difficulty() {
@@ -178,17 +194,20 @@ GtkWidget* create_difficulty() {
     GtkWidget *btn_easy = gtk_button_new_with_label("Fácil (8 tentativas)");
     GtkWidget *btn_med  = gtk_button_new_with_label("Médio (6 tentativas)");
     GtkWidget *btn_hard = gtk_button_new_with_label("Difícil (4 tentativas)");
+    GtkWidget *btn_back = gtk_button_new_with_label("Voltar");
 
     g_signal_connect(btn_easy, "clicked", G_CALLBACK(start_easy), NULL);
     g_signal_connect(btn_med,  "clicked", G_CALLBACK(start_medium), NULL);
     g_signal_connect(btn_hard, "clicked", G_CALLBACK(start_hard), NULL);
+    g_signal_connect(btn_back, "clicked", G_CALLBACK(go_menu), NULL);
 
     gtk_box_pack_start(GTK_BOX(box), lbl, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(box), btn_easy, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(box), btn_med, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(box), btn_hard, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(box), btn_back, FALSE, FALSE, 20);
 
-    return box;
+    return create_box_with_copyright(box);
 }
 
 GtkWidget* create_game() {
@@ -222,7 +241,7 @@ GtkWidget* create_game() {
     gtk_box_pack_start(GTK_BOX(box), label_tries, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(box), grid, TRUE, TRUE, 0);
 
-    return box;
+    return create_box_with_copyright(box);
 }
 
 GtkWidget* create_gameover() {
@@ -239,26 +258,35 @@ GtkWidget* create_gameover() {
     gtk_box_pack_start(GTK_BOX(box), label_gameover, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(box), btn, FALSE, FALSE, 0);
 
-    return box;
+    return create_box_with_copyright(box);
 }
 
 GtkWidget* create_credits() {
-    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 20);
     gtk_widget_set_margin_top(box, 60);
     gtk_widget_set_halign(box, GTK_ALIGN_CENTER);
 
-    GtkWidget *lbl = gtk_label_new(
-        "Gabriel Paes 2026\n\n"
-        "gabriel.paesbarreto@ufrpe.br"
+    GtkWidget *lbl_title = gtk_label_new("Créditos");
+    gtk_style_context_add_class(gtk_widget_get_style_context(lbl_title), "title");
+
+    GtkWidget *lbl_info = gtk_label_new(
+        "Desenvolvido por:\n"
+        "Gabriel Paes\n\n"
+        "Contato:\n"
+        "gabriel.paesbarreto@ufrpe.br\n\n\n"
+        "Build: " BUILD_VERSION
     );
+    gtk_style_context_add_class(gtk_widget_get_style_context(lbl_info), "info");
+    gtk_label_set_justify(GTK_LABEL(lbl_info), GTK_JUSTIFY_CENTER);
 
-    GtkWidget *btn = gtk_button_new_with_label("Voltar");
-    g_signal_connect(btn, "clicked", G_CALLBACK(go_menu), NULL);
+    GtkWidget *btn_back = gtk_button_new_with_label("Voltar");
+    g_signal_connect(btn_back, "clicked", G_CALLBACK(go_menu), NULL);
 
-    gtk_box_pack_start(GTK_BOX(box), lbl, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(box), btn, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(box), lbl_title, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(box), lbl_info, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(box), btn_back, FALSE, FALSE, 0);
 
-    return box;
+    return create_box_with_copyright(box);
 }
 
 /* ---------- MAIN ---------- */
@@ -268,7 +296,7 @@ int main(int argc, char *argv[]) {
     load_css();
 
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(window), "Number Guillotine v1.1.0");
+    gtk_window_set_title(GTK_WINDOW(window), "Number Guillotine " BUILD_VERSION);
     gtk_window_set_default_size(GTK_WINDOW(window), 700, 700);
     g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
@@ -287,4 +315,3 @@ int main(int argc, char *argv[]) {
     gtk_main();
     return 0;
 }
-
