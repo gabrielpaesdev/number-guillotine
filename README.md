@@ -24,8 +24,6 @@ The player must discover a secret number between 1 and 100 within a limited numb
 
 ## Requirements
 
-- GCC compiler  
-- GTK+3 development libraries  
 - Linux or any system with GTK+3 support  
 
 
