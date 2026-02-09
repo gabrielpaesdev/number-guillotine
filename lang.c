@@ -53,6 +53,9 @@ static const char *strings[STR_COUNT][LANG_MAX] = {
     // STR_SETTINGS_LANG_LABEL
     {"Language / Idioma", "Language / Idioma"},
     
+    // STR_SETTINGS_THEME
+    {"Dark Mode", "Modo Escuro"},
+    
     // STR_COPYRIGHT
     {"© Gabriel Paes 2026", "© Gabriel Paes 2026"}
 };
