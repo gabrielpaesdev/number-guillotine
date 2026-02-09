@@ -1,6 +1,7 @@
 #ifndef LANG_H
 #define LANG_H
 
+
 typedef enum {
     STR_TITLE,
     STR_BTN_PLAY,
@@ -26,10 +27,12 @@ typedef enum {
     
     STR_SETTINGS_TITLE,
     STR_SETTINGS_LANG_LABEL,
+    STR_SETTINGS_THEME,
     STR_COPYRIGHT,
     
     STR_COUNT 
 } StringID;
+
 
 typedef enum {
     LANG_EN,
