@@ -4,102 +4,131 @@
 #include "lang.h"
 
 #define MAX_NUM 100
-#define BUILD_VERSION "v1.2.0"
+#define BUILD_VERSION "v1.3.0"
 
-
-
+/* ---------- VARIÁVEIS GLOBAIS DE WIDGETS ---------- */
 GtkWidget *window;
 GtkWidget *stack;
 
-
+/* Menu Principal */
 GtkWidget *lbl_menu_title;
 GtkWidget *btn_menu_play;
 GtkWidget *btn_menu_settings;
 GtkWidget *btn_menu_credits;
 GtkWidget *btn_menu_exit;
 
-
+/* Dificuldade */
 GtkWidget *lbl_diff_title;
 GtkWidget *btn_diff_easy;
 GtkWidget *btn_diff_med;
 GtkWidget *btn_diff_hard;
 GtkWidget *btn_diff_back;
 
-
+/* Configurações */
 GtkWidget *lbl_settings_title;
 GtkWidget *lbl_settings_lang;
+GtkWidget *lbl_settings_theme; /* Novo Label para o tema */
+GtkWidget *switch_theme;       /* Novo Switch */
 GtkWidget *btn_settings_back;
 
-
+/* Créditos */
 GtkWidget *lbl_credits_title;
 GtkWidget *lbl_credits_info;
 GtkWidget *btn_credits_back;
 
-
+/* Jogo */
 GtkWidget *buttons[MAX_NUM+1]; 
-GtkWidget *label_info;         
+GtkWidget *label_info;
 GtkWidget *label_tries;
-GtkWidget *label_gameover;     
+GtkWidget *label_gameover;
 GtkWidget *btn_gameover_back;
-GtkWidget *game_box;           
-
-
+GtkWidget *game_box;
 
 /* ---------- ESTADO DO JOGO ---------- */
 int secret;
 int min = 1, max = MAX_NUM;
 int tries_left = 0;
 int active_count = MAX_NUM;
+int is_dark_mode = 1; /* 1 = Dark (Padrão), 0 = Light */
 
 /* ---------- PROTÓTIPOS ---------- */
 void update_interface_text();
 void go_menu(GtkWidget *w, gpointer data);
+void load_css();
 
 /* ---------- CSS ---------- */
 void load_css() {
     GtkCssProvider *provider = gtk_css_provider_new();
-    gtk_css_provider_load_from_data(provider,
-        "window { background: #121212; }\n"
-        "label { color: #eeeeee; font-size: 18px; }\n"
-        "button { background: #2c2c2c; color: white; border-radius: 8px; padding: 10px; }\n"
-        "button:hover { background: #444444; }\n"
-        ".title { font-size: 32px; font-weight: bold; }\n"
-        ".info { font-size: 20px; color: #00ffaa; }\n"
-        ".danger { font-size: 28px; color: #ff5555;}\n"
-        ".copyright { font-size: 12px; color: #888888; }\n"
-        ".active-lang { background: #0055aa; border: 1px solid #0088ff; }\n",
-        -1, NULL);
+    GError *error = NULL;
+    
+    gtk_css_provider_load_from_path(provider, "style.css", &error);
+
+    if (error) {
+        g_warning("Erro ao carregar style.css: %s", error->message);
+        g_clear_error(&error);
+    }
 
     gtk_style_context_add_provider_for_screen(
         gdk_screen_get_default(),
         GTK_STYLE_PROVIDER(provider),
         GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
     );
+
+    g_object_unref(provider);
+}
+
+/* Função para alternar o tema visualmente */
+void update_theme_style() {
+    GtkStyleContext *context = gtk_widget_get_style_context(window);
+    
+    if (is_dark_mode) {
+        /* Remove a classe 'light' para voltar ao padrão dark */
+        gtk_style_context_remove_class(context, "light");
+    } else {
+        /* Adiciona a classe 'light' definida no CSS */
+        gtk_style_context_add_class(context, "light");
+    }
+}
+
+/* Callback do Switch */
+gboolean on_theme_switch_state_set(GtkSwitch *widget, gboolean state, gpointer data) {
+    /* state = TRUE (ON) -> Dark Mode */
+    /* state = FALSE (OFF) -> Light Mode */
+    is_dark_mode = state;
+    update_theme_style();
+    
+    /* Retornar FALSE para permitir que o sinal continue (atualizar visual do switch) */
+    return FALSE;
 }
 
 /* ---------- LÓGICA DE IDIOMA ---------- */
 
 void update_interface_text() {
     
+    /* Menu */
     gtk_label_set_text(GTK_LABEL(lbl_menu_title), lang_get(STR_TITLE));
     gtk_button_set_label(GTK_BUTTON(btn_menu_play), lang_get(STR_BTN_PLAY));
     gtk_button_set_label(GTK_BUTTON(btn_menu_settings), lang_get(STR_BTN_SETTINGS));
     gtk_button_set_label(GTK_BUTTON(btn_menu_credits), lang_get(STR_BTN_CREDITS));
     gtk_button_set_label(GTK_BUTTON(btn_menu_exit), lang_get(STR_BTN_EXIT));
 
-    
+    /* Dificuldade */
     gtk_label_set_text(GTK_LABEL(lbl_diff_title), lang_get(STR_DIFF_TITLE));
     gtk_button_set_label(GTK_BUTTON(btn_diff_easy), lang_get(STR_DIFF_EASY));
     gtk_button_set_label(GTK_BUTTON(btn_diff_med), lang_get(STR_DIFF_MED));
     gtk_button_set_label(GTK_BUTTON(btn_diff_hard), lang_get(STR_DIFF_HARD));
     gtk_button_set_label(GTK_BUTTON(btn_diff_back), lang_get(STR_BTN_BACK));
 
-    
+    /* Configurações */
     gtk_label_set_text(GTK_LABEL(lbl_settings_title), lang_get(STR_SETTINGS_TITLE));
     gtk_label_set_text(GTK_LABEL(lbl_settings_lang), lang_get(STR_SETTINGS_LANG_LABEL));
+    
+    /* Texto do tema  */
+    gtk_label_set_text(GTK_LABEL(lbl_settings_theme), lang_get(STR_SETTINGS_THEME));
+
     gtk_button_set_label(GTK_BUTTON(btn_settings_back), lang_get(STR_BTN_BACK));
 
-    
+    /* Créditos */
     gtk_label_set_text(GTK_LABEL(lbl_credits_title), lang_get(STR_CREDITS_TITLE));
     
     char buf_credits[256];
@@ -108,10 +137,10 @@ void update_interface_text() {
     
     gtk_button_set_label(GTK_BUTTON(btn_credits_back), lang_get(STR_BTN_BACK));
 
-    
+    /* Game Over */
     gtk_button_set_label(GTK_BUTTON(btn_gameover_back), lang_get(STR_BTN_BACK)); 
 
-    
+    /* Jogo */
     gtk_label_set_text(GTK_LABEL(label_info), lang_get(STR_GAME_INSTRUCT));
 }
 
@@ -217,9 +246,9 @@ void start_game(int tries) {
     gtk_stack_set_visible_child_name(GTK_STACK(stack), "game");
 }
 
-void start_easy(GtkWidget *w, gpointer data)  { start_game(8); }
-void start_medium(GtkWidget *w, gpointer data){ start_game(6); }
-void start_hard(GtkWidget *w, gpointer data)  { start_game(4); }
+void start_easy(GtkWidget *w, gpointer data)   { start_game(8); }
+void start_medium(GtkWidget *w, gpointer data) { start_game(6); }
+void start_hard(GtkWidget *w, gpointer data)   { start_game(4); }
 
 /* ---------- CONSTRUTORES DE TELA ---------- */
 
@@ -297,26 +326,44 @@ GtkWidget* create_settings() {
     lbl_settings_title = gtk_label_new("");
     gtk_style_context_add_class(gtk_widget_get_style_context(lbl_settings_title), "title");
 
+    /* --- SEÇÃO DE IDIOMA --- */
     lbl_settings_lang = gtk_label_new("");
-    
     GtkWidget *box_lang = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
     gtk_widget_set_halign(box_lang, GTK_ALIGN_CENTER);
-    
     GtkWidget *btn_en = gtk_button_new_with_label("English");
     GtkWidget *btn_pt = gtk_button_new_with_label("Português");
-    
     g_signal_connect(btn_en, "clicked", G_CALLBACK(set_lang_en), NULL);
     g_signal_connect(btn_pt, "clicked", G_CALLBACK(set_lang_pt), NULL);
-    
     gtk_box_pack_start(GTK_BOX(box_lang), btn_en, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(box_lang), btn_pt, FALSE, FALSE, 0);
 
+    /* --- SEÇÃO DE TEMA (DARK MODE) --- */
+    lbl_settings_theme = gtk_label_new("Dark Mode");
+    
+    /* Caixa horizontal para o Switch e o texto */
+    GtkWidget *box_theme = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
+    gtk_widget_set_halign(box_theme, GTK_ALIGN_CENTER);
+
+    switch_theme = gtk_switch_new();
+    gtk_switch_set_active(GTK_SWITCH(switch_theme), TRUE); /* Inicia como Dark (ON) */
+    
+    g_signal_connect(switch_theme, "state-set", G_CALLBACK(on_theme_switch_state_set), NULL);
+
+    gtk_box_pack_start(GTK_BOX(box_theme), lbl_settings_theme, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(box_theme), switch_theme, FALSE, FALSE, 0);
+
+    /* Botão Voltar */
     btn_settings_back = gtk_button_new_with_label("");
     g_signal_connect(btn_settings_back, "clicked", G_CALLBACK(go_menu), NULL);
 
+    /* Empacotamento Geral */
     gtk_box_pack_start(GTK_BOX(box), lbl_settings_title, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(box), lbl_settings_lang, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(box), box_lang, FALSE, FALSE, 10);
+    
+    gtk_box_pack_start(GTK_BOX(box), lbl_settings_lang, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(box), box_lang, FALSE, FALSE, 5);
+    
+    gtk_box_pack_start(GTK_BOX(box), box_theme, FALSE, FALSE, 15); /* Espaço extra */
+
     gtk_box_pack_start(GTK_BOX(box), btn_settings_back, FALSE, FALSE, 20);
 
     return create_box_with_copyright(box);
@@ -403,7 +450,6 @@ int main(int argc, char *argv[]) {
     gtk_init(&argc, &argv);
     load_css();
 
-    
     lang_set(LANG_EN);
 
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -414,7 +460,6 @@ int main(int argc, char *argv[]) {
 
     stack = gtk_stack_new();
     gtk_container_add(GTK_CONTAINER(window), stack);
-
     
     gtk_stack_add_named(GTK_STACK(stack), create_menu(), "menu");
     gtk_stack_add_named(GTK_STACK(stack), create_settings(), "settings");
@@ -422,7 +467,6 @@ int main(int argc, char *argv[]) {
     gtk_stack_add_named(GTK_STACK(stack), create_game(), "game");
     gtk_stack_add_named(GTK_STACK(stack), create_gameover(), "gameover");
     gtk_stack_add_named(GTK_STACK(stack), create_credits(), "credits");
-
     
     update_interface_text();
 
