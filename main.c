@@ -6,37 +6,37 @@
 #define MAX_NUM 100
 #define BUILD_VERSION "v1.3.0"
 
-/* ---------- VARIÁVEIS GLOBAIS DE WIDGETS ---------- */
+
 GtkWidget *window;
 GtkWidget *stack;
 
-/* Menu Principal */
+
 GtkWidget *lbl_menu_title;
 GtkWidget *btn_menu_play;
 GtkWidget *btn_menu_settings;
 GtkWidget *btn_menu_credits;
 GtkWidget *btn_menu_exit;
 
-/* Dificuldade */
+
 GtkWidget *lbl_diff_title;
 GtkWidget *btn_diff_easy;
 GtkWidget *btn_diff_med;
 GtkWidget *btn_diff_hard;
 GtkWidget *btn_diff_back;
 
-/* Configurações */
+
 GtkWidget *lbl_settings_title;
 GtkWidget *lbl_settings_lang;
-GtkWidget *lbl_settings_theme; /* Novo Label para o tema */
-GtkWidget *switch_theme;       /* Novo Switch */
+GtkWidget *lbl_settings_theme; 
+GtkWidget *switch_theme;       
 GtkWidget *btn_settings_back;
 
-/* Créditos */
+
 GtkWidget *lbl_credits_title;
 GtkWidget *lbl_credits_info;
 GtkWidget *btn_credits_back;
 
-/* Jogo */
+
 GtkWidget *buttons[MAX_NUM+1]; 
 GtkWidget *label_info;
 GtkWidget *label_tries;
@@ -49,24 +49,84 @@ int secret;
 int min = 1, max = MAX_NUM;
 int tries_left = 0;
 int active_count = MAX_NUM;
-int is_dark_mode = 1; /* 1 = Dark (Padrão), 0 = Light */
+int is_dark_mode = 1; 
 
 /* ---------- PROTÓTIPOS ---------- */
 void update_interface_text();
 void go_menu(GtkWidget *w, gpointer data);
 void load_css();
 
-/* ---------- CSS ---------- */
+/* ---------- CSS EMBUTIDO (Standalone) ---------- */
 void load_css() {
     GtkCssProvider *provider = gtk_css_provider_new();
-    GError *error = NULL;
     
-    gtk_css_provider_load_from_path(provider, "style.css", &error);
+    
+    const char *css_data =
+        "window {"
+        "    background: #121212;"
+        "    color: #eeeeee;"
+        "}"
+        "label {"
+        "    color: #eeeeee;"
+        "    font-size: 18px;"
+        "}"
+        "button {"
+        "    background: #2c2c2c;"
+        "    color: white;"
+        "    border-radius: 8px;"
+        "    padding: 10px;"
+        "    border: 1px solid #3c3c3c;"
+        "}"
+        "button:hover {"
+        "    background: #444444;"
+        "}"
+        ".title {"
+        "    font-size: 32px;"
+        "    font-weight: bold;"
+        "}"
+        ".info {"
+        "    font-size: 20px;"
+        "    color: #00ffaa;"
+        "}"
+        ".danger {"
+        "    font-size: 28px;"
+        "    color: #ff5555;"
+        "}"
+        ".copyright {"
+        "    font-size: 12px;"
+        "    color: #888888;"
+        "}"
+        
+        "window.light {"
+        "    background: #f0f0f0;"
+        "    color: #222222;"
+        "}"
+        "window.light label {"
+        "    color: #222222;"
+        "}"
+        "window.light button {"
+        "    background: #ffffff;"
+        "    color: #222222;"
+        "    border: 1px solid #cccccc;"
+        "}"
+        "window.light button:hover {"
+        "    background: #e0e0e0;"
+        "}"
+        "window.light .title {"
+        "    color: #111111;"
+        "}"
+        "window.light .info {"
+        "    color: #00aa55;"
+        "}"
+        "window.light .danger {"
+        "    color: #cc0000;"
+        "}"
+        "window.light .copyright {"
+        "    color: #666666;"
+        "}";
 
-    if (error) {
-        g_warning("Erro ao carregar style.css: %s", error->message);
-        g_clear_error(&error);
-    }
+    /* Carrega da string (memória) ao invés do arquivo */
+    gtk_css_provider_load_from_data(provider, css_data, -1, NULL);
 
     gtk_style_context_add_provider_for_screen(
         gdk_screen_get_default(),
@@ -82,22 +142,22 @@ void update_theme_style() {
     GtkStyleContext *context = gtk_widget_get_style_context(window);
     
     if (is_dark_mode) {
-        /* Remove a classe 'light' para voltar ao padrão dark */
+
         gtk_style_context_remove_class(context, "light");
     } else {
-        /* Adiciona a classe 'light' definida no CSS */
+
         gtk_style_context_add_class(context, "light");
     }
 }
 
-/* Callback do Switch */
+
 gboolean on_theme_switch_state_set(GtkSwitch *widget, gboolean state, gpointer data) {
-    /* state = TRUE (ON) -> Dark Mode */
-    /* state = FALSE (OFF) -> Light Mode */
+
+
     is_dark_mode = state;
     update_theme_style();
     
-    /* Retornar FALSE para permitir que o sinal continue (atualizar visual do switch) */
+
     return FALSE;
 }
 
