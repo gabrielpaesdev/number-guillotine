@@ -55,6 +55,9 @@ static const char *strings[STR_COUNT][LANG_MAX] = {
     
     // STR_SETTINGS_THEME
     {"Dark Mode", "Modo Escuro"},
+
+    // STR_SETTINGS_THEME
+    {"Animations", "Animações"},
     
     // STR_COPYRIGHT
     {"© Gabriel Paes 2026", "© Gabriel Paes 2026"}
