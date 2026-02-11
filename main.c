@@ -1,15 +1,31 @@
+/*
+ * Program: Number Guillotine
+ * Description: A number-guessing puzzle game.
+ *
+ * Copyright (C) 2026 Gabriel Paes
+ * Contact: gabriel.paesbarreto@ufrpe.br
+ *
+ * This program is free software: you can redistribute it and/or
+ * modify it under the terms of the GNU Affero General Public License
+ * as published by the Free Software Foundation, either version 3
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See <https://www.gnu.org/licenses/> for details.
+ */
+
 #include <gtk/gtk.h>
 #include <stdlib.h>
-#include <time.h>
+#include <stdio.h>
 #include "lang.h"
+#include "engine.h" 
 
-#define MAX_NUM 100
-#define BUILD_VERSION "v1.3.0"
-
+#define BUILD_VERSION "v1.4.0"
 
 GtkWidget *window;
 GtkWidget *stack;
-
 
 GtkWidget *lbl_menu_title;
 GtkWidget *btn_menu_play;
@@ -17,20 +33,19 @@ GtkWidget *btn_menu_settings;
 GtkWidget *btn_menu_credits;
 GtkWidget *btn_menu_exit;
 
-
 GtkWidget *lbl_diff_title;
 GtkWidget *btn_diff_easy;
 GtkWidget *btn_diff_med;
 GtkWidget *btn_diff_hard;
 GtkWidget *btn_diff_back;
 
-
 GtkWidget *lbl_settings_title;
 GtkWidget *lbl_settings_lang;
 GtkWidget *lbl_settings_theme; 
-GtkWidget *switch_theme;       
+GtkWidget *switch_theme;
+GtkWidget *lbl_settings_anim;
+GtkWidget *switch_anim;      
 GtkWidget *btn_settings_back;
-
 
 GtkWidget *lbl_credits_title;
 GtkWidget *lbl_credits_info;
@@ -44,88 +59,82 @@ GtkWidget *label_gameover;
 GtkWidget *btn_gameover_back;
 GtkWidget *game_box;
 
-/* ---------- ESTADO DO JOGO ---------- */
-int secret;
-int min = 1, max = MAX_NUM;
-int tries_left = 0;
-int active_count = MAX_NUM;
 int is_dark_mode = 1; 
+int is_anim_enabled = 1;
 
-/* ---------- PROTÓTIPOS ---------- */
+/* ---------- PROTÓTIPOS LOCAIS ---------- */
 void update_interface_text();
 void go_menu(GtkWidget *w, gpointer data);
 void load_css();
 
-/* ---------- CSS EMBUTIDO (Standalone) ---------- */
+/* ---------- CSS EMBUTIDO---------*/
 void load_css() {
     GtkCssProvider *provider = gtk_css_provider_new();
     
-    
     const char *css_data =
         "window {"
-        "    background: #121212;"
-        "    color: #eeeeee;"
+        "   background: #121212;"
+        "   color: #eeeeee;"
         "}"
         "label {"
-        "    color: #eeeeee;"
-        "    font-size: 18px;"
+        "   color: #eeeeee;"
+        "   font-size: 18px;"
         "}"
         "button {"
-        "    background: #2c2c2c;"
-        "    color: white;"
-        "    border-radius: 8px;"
-        "    padding: 10px;"
-        "    border: 1px solid #3c3c3c;"
+        "   background: #2c2c2c;"
+        "   color: white;"
+        "   border-radius: 8px;"
+        "   padding: 10px;"
+        "   border: 2px solid #3c3c3c;"
         "}"
         "button:hover {"
-        "    background: #444444;"
+        "   background: #444444;"
         "}"
         ".title {"
-        "    font-size: 32px;"
-        "    font-weight: bold;"
+        "   font-size: 32px;"
+        "   font-weight: bold;"
         "}"
         ".info {"
-        "    font-size: 20px;"
-        "    color: #00ffaa;"
+        "   font-size: 20px;"
+        "   color: #00ffaa;"
         "}"
         ".danger {"
-        "    font-size: 28px;"
-        "    color: #ff5555;"
+        "   font-size: 28px;"
+        "   color: #ff5555;"
         "}"
         ".copyright {"
-        "    font-size: 12px;"
-        "    color: #888888;"
+        "   font-size: 12px;"
+        "   color: #888888;"
         "}"
         
         "window.light {"
-        "    background: #f0f0f0;"
-        "    color: #222222;"
+        "   background: #f0f0f0;"
+        "   color: #222222;"
         "}"
         "window.light label {"
-        "    color: #222222;"
+        "   color: #222222;"
         "}"
         "window.light button {"
-        "    background: #ffffff;"
-        "    color: #222222;"
-        "    border: 1px solid #cccccc;"
+        "   background: #ffffff;"
+        "   color: #222222;"
+        "   border: 1px solid #cccccc;"
         "}"
         "window.light button:hover {"
-        "    background: #e0e0e0;"
+        "   background: #e0e0e0;"
         "}"
         "window.light .title {"
-        "    color: #111111;"
+        "   color: #111111;"
         "}"
         "window.light .info {"
-        "    color: #00aa55;"
+        "   color: #00aa55;"
         "}"
         "window.light .danger {"
-        "    color: #cc0000;"
+        "   color: #cc0000;"
         "}"
         "window.light .copyright {"
-        "    color: #666666;"
+        "   color: #666666;"
         "}";
 
-    /* Carrega da string (memória) ao invés do arquivo */
     gtk_css_provider_load_from_data(provider, css_data, -1, NULL);
 
     gtk_style_context_add_provider_for_screen(
@@ -137,58 +146,64 @@ void load_css() {
     g_object_unref(provider);
 }
 
-/* Função para alternar o tema visualmente */
+
 void update_theme_style() {
     GtkStyleContext *context = gtk_widget_get_style_context(window);
     
     if (is_dark_mode) {
-
         gtk_style_context_remove_class(context, "light");
     } else {
-
         gtk_style_context_add_class(context, "light");
     }
 }
 
-
 gboolean on_theme_switch_state_set(GtkSwitch *widget, gboolean state, gpointer data) {
-
-
     is_dark_mode = state;
     update_theme_style();
-    
-
     return FALSE;
+}
+
+gboolean on_anim_switch_state_set(GtkSwitch *widget, gboolean state, gpointer data) {
+    is_anim_enabled = state;
+    return FALSE;
+}
+
+void set_stack_transition(GtkStackTransitionType trans) {
+    if (is_anim_enabled) {
+        gtk_stack_set_transition_type(GTK_STACK(stack), trans);
+    } else {
+        gtk_stack_set_transition_type(GTK_STACK(stack), GTK_STACK_TRANSITION_TYPE_NONE);
+    }
 }
 
 /* ---------- LÓGICA DE IDIOMA ---------- */
 
 void update_interface_text() {
-    
-    /* Menu */
+
     gtk_label_set_text(GTK_LABEL(lbl_menu_title), lang_get(STR_TITLE));
     gtk_button_set_label(GTK_BUTTON(btn_menu_play), lang_get(STR_BTN_PLAY));
     gtk_button_set_label(GTK_BUTTON(btn_menu_settings), lang_get(STR_BTN_SETTINGS));
     gtk_button_set_label(GTK_BUTTON(btn_menu_credits), lang_get(STR_BTN_CREDITS));
     gtk_button_set_label(GTK_BUTTON(btn_menu_exit), lang_get(STR_BTN_EXIT));
 
-    /* Dificuldade */
+
     gtk_label_set_text(GTK_LABEL(lbl_diff_title), lang_get(STR_DIFF_TITLE));
     gtk_button_set_label(GTK_BUTTON(btn_diff_easy), lang_get(STR_DIFF_EASY));
     gtk_button_set_label(GTK_BUTTON(btn_diff_med), lang_get(STR_DIFF_MED));
     gtk_button_set_label(GTK_BUTTON(btn_diff_hard), lang_get(STR_DIFF_HARD));
     gtk_button_set_label(GTK_BUTTON(btn_diff_back), lang_get(STR_BTN_BACK));
 
-    /* Configurações */
+
     gtk_label_set_text(GTK_LABEL(lbl_settings_title), lang_get(STR_SETTINGS_TITLE));
     gtk_label_set_text(GTK_LABEL(lbl_settings_lang), lang_get(STR_SETTINGS_LANG_LABEL));
     
-    /* Texto do tema  */
+
     gtk_label_set_text(GTK_LABEL(lbl_settings_theme), lang_get(STR_SETTINGS_THEME));
+    gtk_label_set_text(GTK_LABEL(lbl_settings_anim), lang_get(STR_SETTINGS_ANIM));
 
     gtk_button_set_label(GTK_BUTTON(btn_settings_back), lang_get(STR_BTN_BACK));
 
-    /* Créditos */
+
     gtk_label_set_text(GTK_LABEL(lbl_credits_title), lang_get(STR_CREDITS_TITLE));
     
     char buf_credits[256];
@@ -197,10 +212,10 @@ void update_interface_text() {
     
     gtk_button_set_label(GTK_BUTTON(btn_credits_back), lang_get(STR_BTN_BACK));
 
-    /* Game Over */
+
     gtk_button_set_label(GTK_BUTTON(btn_gameover_back), lang_get(STR_BTN_BACK)); 
 
-    /* Jogo */
+
     gtk_label_set_text(GTK_LABEL(label_info), lang_get(STR_GAME_INSTRUCT));
 }
 
@@ -217,98 +232,24 @@ void set_lang_pt(GtkWidget *w, gpointer data) {
 /* ---------- NAVEGAÇÃO ---------- */
 
 void go_menu(GtkWidget *w, gpointer data) {
+    set_stack_transition(GTK_STACK_TRANSITION_TYPE_SLIDE_RIGHT);
     gtk_stack_set_visible_child_name(GTK_STACK(stack), "menu");
 }
 
 void go_credits(GtkWidget *w, gpointer data) {
+    set_stack_transition(GTK_STACK_TRANSITION_TYPE_SLIDE_LEFT);
     gtk_stack_set_visible_child_name(GTK_STACK(stack), "credits");
 }
 
 void go_difficulty(GtkWidget *w, gpointer data) {
+    set_stack_transition(GTK_STACK_TRANSITION_TYPE_SLIDE_LEFT);
     gtk_stack_set_visible_child_name(GTK_STACK(stack), "difficulty");
 }
 
 void go_settings(GtkWidget *w, gpointer data) {
+    set_stack_transition(GTK_STACK_TRANSITION_TYPE_SLIDE_LEFT);
     gtk_stack_set_visible_child_name(GTK_STACK(stack), "settings");
 }
-
-/* ---------- LÓGICA DO JOGO ---------- */
-
-void update_buttons() {
-    active_count = 0;
-
-    for (int i = 1; i <= MAX_NUM; i++) {
-        GtkWidget *label = gtk_bin_get_child(GTK_BIN(buttons[i]));
-        char buf[64];
-
-        if (i < min || i > max) {
-            sprintf(buf, "<s>%d</s>", i);
-            gtk_label_set_markup(GTK_LABEL(label), buf);
-            gtk_widget_set_sensitive(buttons[i], FALSE);
-        } else {
-            sprintf(buf, "%d", i);
-            gtk_label_set_text(GTK_LABEL(label), buf);
-            gtk_widget_set_sensitive(buttons[i], TRUE);
-            active_count++;
-        }
-    }
-
-    char tbuf[64];
-    sprintf(tbuf, lang_get(STR_GAME_TRIES), tries_left);
-    gtk_label_set_text(GTK_LABEL(label_tries), tbuf);
-
-    if (active_count == 1) {
-        char buf[128];
-        sprintf(buf, lang_get(STR_GAME_LOSE), secret);
-        gtk_label_set_text(GTK_LABEL(label_gameover), buf);
-        gtk_stack_set_visible_child_name(GTK_STACK(stack), "gameover");
-    }
-}
-
-void on_number_clicked(GtkWidget *widget, gpointer data) {
-    int num = GPOINTER_TO_INT(data);
-    tries_left--;
-
-    if (num == secret) {
-        gtk_label_set_text(GTK_LABEL(label_gameover), lang_get(STR_GAME_WIN));
-        gtk_stack_set_visible_child_name(GTK_STACK(stack), "gameover");
-        return;
-    }
-
-    if (num < secret) {
-        min = num + 1;
-        gtk_label_set_text(GTK_LABEL(label_info), lang_get(STR_GAME_BIGGER));
-    } else {
-        max = num - 1;
-        gtk_label_set_text(GTK_LABEL(label_info), lang_get(STR_GAME_SMALLER));
-    }
-
-    if (tries_left <= 0) {
-        char buf[128];
-        sprintf(buf, lang_get(STR_GAME_LOSE), secret);
-        gtk_label_set_text(GTK_LABEL(label_gameover), buf);
-        gtk_stack_set_visible_child_name(GTK_STACK(stack), "gameover");
-        return;
-    }
-
-    update_buttons();
-}
-
-void start_game(int tries) {
-    srand(time(NULL));
-    secret = (rand() % MAX_NUM) + 1;
-    min = 1;
-    max = MAX_NUM;
-    tries_left = tries;
-
-    gtk_label_set_text(GTK_LABEL(label_info), lang_get(STR_GAME_INSTRUCT));
-    update_buttons();
-    gtk_stack_set_visible_child_name(GTK_STACK(stack), "game");
-}
-
-void start_easy(GtkWidget *w, gpointer data)   { start_game(8); }
-void start_medium(GtkWidget *w, gpointer data) { start_game(6); }
-void start_hard(GtkWidget *w, gpointer data)   { start_game(4); }
 
 /* ---------- CONSTRUTORES DE TELA ---------- */
 
@@ -364,6 +305,7 @@ GtkWidget* create_difficulty() {
     btn_diff_hard = gtk_button_new_with_label("");
     btn_diff_back = gtk_button_new_with_label("");
 
+
     g_signal_connect(btn_diff_easy, "clicked", G_CALLBACK(start_easy), NULL);
     g_signal_connect(btn_diff_med,  "clicked", G_CALLBACK(start_medium), NULL);
     g_signal_connect(btn_diff_hard, "clicked", G_CALLBACK(start_hard), NULL);
@@ -400,17 +342,30 @@ GtkWidget* create_settings() {
     /* --- SEÇÃO DE TEMA (DARK MODE) --- */
     lbl_settings_theme = gtk_label_new("Dark Mode");
     
-    /* Caixa horizontal para o Switch e o texto */
     GtkWidget *box_theme = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
     gtk_widget_set_halign(box_theme, GTK_ALIGN_CENTER);
 
     switch_theme = gtk_switch_new();
-    gtk_switch_set_active(GTK_SWITCH(switch_theme), TRUE); /* Inicia como Dark (ON) */
+    gtk_switch_set_active(GTK_SWITCH(switch_theme), TRUE); 
     
     g_signal_connect(switch_theme, "state-set", G_CALLBACK(on_theme_switch_state_set), NULL);
 
     gtk_box_pack_start(GTK_BOX(box_theme), lbl_settings_theme, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(box_theme), switch_theme, FALSE, FALSE, 0);
+
+    /* --- SEÇÃO DE ANIMAÇÕES --- */
+    lbl_settings_anim = gtk_label_new("Animations");
+
+    GtkWidget *box_anim = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
+    gtk_widget_set_halign(box_anim, GTK_ALIGN_CENTER);
+
+    switch_anim = gtk_switch_new();
+    gtk_switch_set_active(GTK_SWITCH(switch_anim), TRUE);
+
+    g_signal_connect(switch_anim, "state-set", G_CALLBACK(on_anim_switch_state_set), NULL);
+
+    gtk_box_pack_start(GTK_BOX(box_anim), lbl_settings_anim, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(box_anim), switch_anim, FALSE, FALSE, 0);
 
     /* Botão Voltar */
     btn_settings_back = gtk_button_new_with_label("");
@@ -422,7 +377,8 @@ GtkWidget* create_settings() {
     gtk_box_pack_start(GTK_BOX(box), lbl_settings_lang, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(box), box_lang, FALSE, FALSE, 5);
     
-    gtk_box_pack_start(GTK_BOX(box), box_theme, FALSE, FALSE, 15); /* Espaço extra */
+    gtk_box_pack_start(GTK_BOX(box), box_theme, FALSE, FALSE, 10); 
+    gtk_box_pack_start(GTK_BOX(box), box_anim, FALSE, FALSE, 10);
 
     gtk_box_pack_start(GTK_BOX(box), btn_settings_back, FALSE, FALSE, 20);
 
@@ -519,6 +475,8 @@ int main(int argc, char *argv[]) {
     g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
     stack = gtk_stack_new();
+    gtk_stack_set_transition_duration(GTK_STACK(stack), 350);
+    gtk_stack_set_transition_type(GTK_STACK(stack), GTK_STACK_TRANSITION_TYPE_SLIDE_LEFT);
     gtk_container_add(GTK_CONTAINER(window), stack);
     
     gtk_stack_add_named(GTK_STACK(stack), create_menu(), "menu");
