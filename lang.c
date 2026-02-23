@@ -1,3 +1,20 @@
+/*
+ * Program: Number Guillotine
+ * Description: A number-guessing puzzle game.
+ *
+ * Copyright (C) 2026 Gabriel Paes
+ * Contact: <gabrielpaesdev@proton.me>
+ *
+ * This program is free software: you can redistribute it and/or
+ * modify it under the terms of the GNU Affero General Public License
+ * as published by the Free Software Foundation, either version 3
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See <https://www.gnu.org/licenses/> for details.
+ */
 #include "lang.h"
 #include <stdio.h>
 
@@ -44,8 +61,8 @@ static const char *strings[STR_COUNT][LANG_MAX] = {
     {"Credits", "Créditos"},
     // STR_CREDITS_BODY
     {
-        "Developed by:\nGabriel Paes\n\nContact:\ngabriel.paesbarreto@ufrpe.br\n\n\nBuild: %s",
-        "Desenvolvido por:\nGabriel Paes\n\nContato:\ngabriel.paesbarreto@ufrpe.br\n\n\nBuild: %s"
+        "Developed by:\nGabriel Paes\n\nContact:\ngabrielpaesdev@proton.me\n\n\nBuild: %s",
+        "Desenvolvido por:\nGabriel Paes\n\nContato:\ngabrielpaesdev@proton.me\n\n\nBuild: %s"
     },
     
     // STR_SETTINGS_TITLE
