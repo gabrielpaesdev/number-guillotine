@@ -23,7 +23,7 @@
 #include "engine.h" 
 #include "resources.h"
 
-#define BUILD_VERSION "v1.4.1"
+#define BUILD_VERSION "v1.4.2"
 
 GtkWidget *window;
 GtkWidget *stack;
@@ -57,6 +57,7 @@ GtkWidget *buttons[MAX_NUM+1];
 GtkWidget *label_info;
 GtkWidget *label_tries;
 GtkWidget *label_gameover;
+GtkWidget *btn_gameover_play_again;
 GtkWidget *btn_gameover_back;
 GtkWidget *game_box;
 
@@ -66,8 +67,6 @@ int is_anim_enabled = 1;
 /* ---------- PROTÓTIPOS LOCAIS ---------- */
 void update_interface_text();
 void go_menu(GtkWidget *w, gpointer data);
-
-
 
 
 void update_theme_style() {
@@ -135,7 +134,7 @@ void update_interface_text() {
     
     gtk_button_set_label(GTK_BUTTON(btn_credits_back), lang_get(STR_BTN_BACK));
 
-
+    gtk_button_set_label(GTK_BUTTON(btn_gameover_play_again), lang_get(STR_BTN_PLAY_AGAIN));
     gtk_button_set_label(GTK_BUTTON(btn_gameover_back), lang_get(STR_BTN_BACK)); 
 
 
@@ -352,10 +351,14 @@ GtkWidget* create_gameover() {
     gtk_label_set_justify(GTK_LABEL(label_gameover), GTK_JUSTIFY_CENTER);
     gtk_style_context_add_class(gtk_widget_get_style_context(label_gameover), "danger");
 
+    btn_gameover_play_again = gtk_button_new_with_label("");
+    g_signal_connect(btn_gameover_play_again, "clicked", G_CALLBACK(restart_game), NULL);
+
     btn_gameover_back = gtk_button_new_with_label("");
     g_signal_connect(btn_gameover_back, "clicked", G_CALLBACK(go_menu), NULL);
 
     gtk_box_pack_start(GTK_BOX(box), label_gameover, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(box), btn_gameover_play_again, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(box), btn_gameover_back, FALSE, FALSE, 0);
 
     return create_box_with_copyright(box);
