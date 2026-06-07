@@ -5,18 +5,17 @@
 #include "lang.h"
 #include "engine.h"
 
-
 extern GtkWidget *stack;
 extern GtkWidget *label_info;
 extern GtkWidget *label_tries;
 extern GtkWidget *label_gameover;
 extern GtkWidget *buttons[MAX_NUM+1];
 
-
 int secret;
 int min = 1, max = MAX_NUM;
 int tries_left = 0;
 int active_count = MAX_NUM;
+int current_difficulty_tries = 8;
 
 /* ---------- LÓGICA DO JOGO ---------- */
 
@@ -81,6 +80,8 @@ void on_number_clicked(GtkWidget *widget, gpointer data) {
 }
 
 void start_game(int tries) {
+    current_difficulty_tries = tries;
+
     srand(time(NULL));
     secret = (rand() % MAX_NUM) + 1;
     min = 1;
@@ -90,6 +91,10 @@ void start_game(int tries) {
     gtk_label_set_text(GTK_LABEL(label_info), lang_get(STR_GAME_INSTRUCT));
     update_buttons();
     gtk_stack_set_visible_child_name(GTK_STACK(stack), "game");
+}
+
+void restart_game(GtkWidget *w, gpointer data) {
+    start_game(current_difficulty_tries);
 }
 
 void start_easy(GtkWidget *w, gpointer data)   { start_game(8); }
