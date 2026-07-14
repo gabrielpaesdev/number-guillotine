@@ -18,9 +18,9 @@
 #include "lang.h"
 #include <stdio.h>
 
-static LanguageID current_lang = LANG_EN; // Default: Inglês
+static LanguageID current_lang = LANG_EN; // Default: English
 
-// Tabela de Strings: [ID DA STRING][ID DO IDIOMA]
+// String Table: [STRING ID][LANG ID]
 static const char *strings[STR_COUNT][LANG_MAX] = {
     // STR_TITLE
     {"Number Guillotine", "Number Guillotine"},
@@ -32,7 +32,7 @@ static const char *strings[STR_COUNT][LANG_MAX] = {
     {"Credits", "Créditos"},
     // STR_BTN_EXIT
     {"Exit", "Sair"},
-    
+
     // STR_DIFF_TITLE
     {"Choose Difficulty", "Escolha a Dificuldade"},
     // STR_DIFF_EASY
@@ -43,7 +43,7 @@ static const char *strings[STR_COUNT][LANG_MAX] = {
     {"Hard (4 tries)", "Difícil (4 tentativas)"},
     // STR_BTN_BACK
     {"Back", "Voltar"},
-    
+
     // STR_GAME_INSTRUCT
     {"Choose a number", "Escolha um número"},
     // STR_GAME_TRIES
@@ -56,7 +56,7 @@ static const char *strings[STR_COUNT][LANG_MAX] = {
     {"CONGRATS!\nYou Won!", "PARABÉNS!\nVocê venceu!"},
     // STR_GAME_LOSE
     {"GAME OVER\nThe number was: %d", "GAME OVER\nO número certo era: %d"},
-    
+
     // STR_CREDITS_TITLE
     {"Credits", "Créditos"},
     // STR_CREDITS_BODY
@@ -64,18 +64,21 @@ static const char *strings[STR_COUNT][LANG_MAX] = {
         "Developed by:\nGabriel Paes\n\nContact:\ngabrielpaesdev@proton.me\n\n\nBuild: %s",
         "Desenvolvido por:\nGabriel Paes\n\nContato:\ngabrielpaesdev@proton.me\n\n\nBuild: %s"
     },
-    
+
     // STR_SETTINGS_TITLE
     {"Settings", "Configurações"},
     // STR_SETTINGS_LANG_LABEL
     {"Language / Idioma", "Language / Idioma"},
-    
+
     // STR_SETTINGS_THEME
     {"Dark Mode", "Modo Escuro"},
 
     // STR_SETTINGS_ANIM
     {"Animations", "Animações"},
-    
+
+    // STR_SETTINGS_VOL
+    {"Volume", "Volume"},
+
     // STR_COPYRIGHT
     {"© Gabriel Paes 2026", "© Gabriel Paes 2026"},
 
