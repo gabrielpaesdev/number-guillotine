@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include "lang.h"
 #include "engine.h"
+#include "sfx.h"
 
 extern GtkWidget *stack;
 extern GtkWidget *label_info;
@@ -17,7 +18,15 @@ int tries_left = 0;
 int active_count = MAX_NUM;
 int current_difficulty_tries = 8;
 
-/* ---------- LÓGICA DO JOGO ---------- */
+gboolean delayed_victory(gpointer data) {
+    play_victory();
+    return FALSE;
+}
+
+gboolean delayed_defeat(gpointer data) {
+    play_defeat();
+    return FALSE;
+}
 
 void update_buttons() {
     active_count = 0;
@@ -47,6 +56,7 @@ void update_buttons() {
         sprintf(buf, lang_get(STR_GAME_LOSE), secret);
         gtk_label_set_text(GTK_LABEL(label_gameover), buf);
         gtk_stack_set_visible_child_name(GTK_STACK(stack), "gameover");
+        g_timeout_add(350, delayed_defeat, NULL);
     }
 }
 
@@ -57,6 +67,7 @@ void on_number_clicked(GtkWidget *widget, gpointer data) {
     if (num == secret) {
         gtk_label_set_text(GTK_LABEL(label_gameover), lang_get(STR_GAME_WIN));
         gtk_stack_set_visible_child_name(GTK_STACK(stack), "gameover");
+        g_timeout_add(350, delayed_victory, NULL);
         return;
     }
 
@@ -73,9 +84,11 @@ void on_number_clicked(GtkWidget *widget, gpointer data) {
         sprintf(buf, lang_get(STR_GAME_LOSE), secret);
         gtk_label_set_text(GTK_LABEL(label_gameover), buf);
         gtk_stack_set_visible_child_name(GTK_STACK(stack), "gameover");
+        g_timeout_add(350, delayed_defeat, NULL);
         return;
     }
 
+    play_click();
     update_buttons();
 }
 
@@ -91,6 +104,7 @@ void start_game(int tries) {
     gtk_label_set_text(GTK_LABEL(label_info), lang_get(STR_GAME_INSTRUCT));
     update_buttons();
     gtk_stack_set_visible_child_name(GTK_STACK(stack), "game");
+    play_click();
 }
 
 void restart_game(GtkWidget *w, gpointer data) {
