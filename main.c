@@ -20,10 +20,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "lang.h"
-#include "engine.h" 
+#include "engine.h"
 #include "resources.h"
+#include "sfx.h"
 
-#define BUILD_VERSION "v1.4.2"
+#define BUILD_VERSION "v1.5.0"
 
 GtkWidget *window;
 GtkWidget *stack;
@@ -42,18 +43,19 @@ GtkWidget *btn_diff_back;
 
 GtkWidget *lbl_settings_title;
 GtkWidget *lbl_settings_lang;
-GtkWidget *lbl_settings_theme; 
+GtkWidget *lbl_settings_theme;
 GtkWidget *switch_theme;
 GtkWidget *lbl_settings_anim;
-GtkWidget *switch_anim;      
+GtkWidget *switch_anim;
+GtkWidget *lbl_settings_vol;
+GtkWidget *scale_vol;
 GtkWidget *btn_settings_back;
 
 GtkWidget *lbl_credits_title;
 GtkWidget *lbl_credits_info;
 GtkWidget *btn_credits_back;
 
-
-GtkWidget *buttons[MAX_NUM+1]; 
+GtkWidget *buttons[MAX_NUM+1];
 GtkWidget *label_info;
 GtkWidget *label_tries;
 GtkWidget *label_gameover;
@@ -61,17 +63,15 @@ GtkWidget *btn_gameover_play_again;
 GtkWidget *btn_gameover_back;
 GtkWidget *game_box;
 
-int is_dark_mode = 1; 
+int is_dark_mode = 1;
 int is_anim_enabled = 1;
 
-/* ---------- PROTÓTIPOS LOCAIS ---------- */
 void update_interface_text();
 void go_menu(GtkWidget *w, gpointer data);
 
-
 void update_theme_style() {
     GtkStyleContext *context = gtk_widget_get_style_context(window);
-    
+
     if (is_dark_mode) {
         gtk_style_context_remove_class(context, "light");
     } else {
@@ -90,6 +90,11 @@ gboolean on_anim_switch_state_set(GtkSwitch *widget, gboolean state, gpointer da
     return FALSE;
 }
 
+void on_volume_changed(GtkRange *range, gpointer data) {
+    double val = gtk_range_get_value(range);
+    sfx_set_volume(val);
+}
+
 void set_stack_transition(GtkStackTransitionType trans) {
     if (is_anim_enabled) {
         gtk_stack_set_transition_type(GTK_STACK(stack), trans);
@@ -98,16 +103,12 @@ void set_stack_transition(GtkStackTransitionType trans) {
     }
 }
 
-/* ---------- LÓGICA DE IDIOMA ---------- */
-
 void update_interface_text() {
-
     gtk_label_set_text(GTK_LABEL(lbl_menu_title), lang_get(STR_TITLE));
     gtk_button_set_label(GTK_BUTTON(btn_menu_play), lang_get(STR_BTN_PLAY));
     gtk_button_set_label(GTK_BUTTON(btn_menu_settings), lang_get(STR_BTN_SETTINGS));
     gtk_button_set_label(GTK_BUTTON(btn_menu_credits), lang_get(STR_BTN_CREDITS));
     gtk_button_set_label(GTK_BUTTON(btn_menu_exit), lang_get(STR_BTN_EXIT));
-
 
     gtk_label_set_text(GTK_LABEL(lbl_diff_title), lang_get(STR_DIFF_TITLE));
     gtk_button_set_label(GTK_BUTTON(btn_diff_easy), lang_get(STR_DIFF_EASY));
@@ -115,28 +116,25 @@ void update_interface_text() {
     gtk_button_set_label(GTK_BUTTON(btn_diff_hard), lang_get(STR_DIFF_HARD));
     gtk_button_set_label(GTK_BUTTON(btn_diff_back), lang_get(STR_BTN_BACK));
 
-
     gtk_label_set_text(GTK_LABEL(lbl_settings_title), lang_get(STR_SETTINGS_TITLE));
     gtk_label_set_text(GTK_LABEL(lbl_settings_lang), lang_get(STR_SETTINGS_LANG_LABEL));
-    
 
     gtk_label_set_text(GTK_LABEL(lbl_settings_theme), lang_get(STR_SETTINGS_THEME));
     gtk_label_set_text(GTK_LABEL(lbl_settings_anim), lang_get(STR_SETTINGS_ANIM));
+    gtk_label_set_text(GTK_LABEL(lbl_settings_vol), lang_get(STR_SETTINGS_VOL));
 
     gtk_button_set_label(GTK_BUTTON(btn_settings_back), lang_get(STR_BTN_BACK));
 
-
     gtk_label_set_text(GTK_LABEL(lbl_credits_title), lang_get(STR_CREDITS_TITLE));
-    
+
     char buf_credits[256];
     sprintf(buf_credits, lang_get(STR_CREDITS_BODY), BUILD_VERSION);
     gtk_label_set_text(GTK_LABEL(lbl_credits_info), buf_credits);
-    
+
     gtk_button_set_label(GTK_BUTTON(btn_credits_back), lang_get(STR_BTN_BACK));
 
     gtk_button_set_label(GTK_BUTTON(btn_gameover_play_again), lang_get(STR_BTN_PLAY_AGAIN));
-    gtk_button_set_label(GTK_BUTTON(btn_gameover_back), lang_get(STR_BTN_BACK)); 
-
+    gtk_button_set_label(GTK_BUTTON(btn_gameover_back), lang_get(STR_BTN_BACK));
 
     gtk_label_set_text(GTK_LABEL(label_info), lang_get(STR_GAME_INSTRUCT));
 }
@@ -150,8 +148,6 @@ void set_lang_pt(GtkWidget *w, gpointer data) {
     lang_set(LANG_PT);
     update_interface_text();
 }
-
-/* ---------- NAVEGAÇÃO ---------- */
 
 void go_menu(GtkWidget *w, gpointer data) {
     set_stack_transition(GTK_STACK_TRANSITION_TYPE_SLIDE_RIGHT);
@@ -173,13 +169,11 @@ void go_settings(GtkWidget *w, gpointer data) {
     gtk_stack_set_visible_child_name(GTK_STACK(stack), "settings");
 }
 
-/* ---------- CONSTRUTORES DE TELA ---------- */
-
 GtkWidget* create_box_with_copyright(GtkWidget *main_content) {
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
     gtk_box_pack_start(GTK_BOX(vbox), main_content, TRUE, TRUE, 0);
 
-    GtkWidget *lbl_cpy = gtk_label_new(lang_get(STR_COPYRIGHT)); 
+    GtkWidget *lbl_cpy = gtk_label_new(lang_get(STR_COPYRIGHT));
     gtk_style_context_add_class(gtk_widget_get_style_context(lbl_cpy), "copyright");
     gtk_widget_set_halign(lbl_cpy, GTK_ALIGN_CENTER);
 
@@ -227,7 +221,6 @@ GtkWidget* create_difficulty() {
     btn_diff_hard = gtk_button_new_with_label("");
     btn_diff_back = gtk_button_new_with_label("");
 
-
     g_signal_connect(btn_diff_easy, "clicked", G_CALLBACK(start_easy), NULL);
     g_signal_connect(btn_diff_med,  "clicked", G_CALLBACK(start_medium), NULL);
     g_signal_connect(btn_diff_hard, "clicked", G_CALLBACK(start_hard), NULL);
@@ -250,7 +243,6 @@ GtkWidget* create_settings() {
     lbl_settings_title = gtk_label_new("");
     gtk_style_context_add_class(gtk_widget_get_style_context(lbl_settings_title), "title");
 
-    /* --- SEÇÃO DE IDIOMA --- */
     lbl_settings_lang = gtk_label_new("");
     GtkWidget *box_lang = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
     gtk_widget_set_halign(box_lang, GTK_ALIGN_CENTER);
@@ -261,48 +253,45 @@ GtkWidget* create_settings() {
     gtk_box_pack_start(GTK_BOX(box_lang), btn_en, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(box_lang), btn_pt, FALSE, FALSE, 0);
 
-    /* --- SEÇÃO DE TEMA (DARK MODE) --- */
-    lbl_settings_theme = gtk_label_new("Dark Mode");
-    
+    lbl_settings_theme = gtk_label_new("");
     GtkWidget *box_theme = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
     gtk_widget_set_halign(box_theme, GTK_ALIGN_CENTER);
-
     switch_theme = gtk_switch_new();
-    gtk_switch_set_active(GTK_SWITCH(switch_theme), TRUE); 
-    
+    gtk_switch_set_active(GTK_SWITCH(switch_theme), TRUE);
     g_signal_connect(switch_theme, "state-set", G_CALLBACK(on_theme_switch_state_set), NULL);
-
     gtk_box_pack_start(GTK_BOX(box_theme), lbl_settings_theme, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(box_theme), switch_theme, FALSE, FALSE, 0);
 
-    /* --- SEÇÃO DE ANIMAÇÕES --- */
-    lbl_settings_anim = gtk_label_new("Animations");
-
+    lbl_settings_anim = gtk_label_new("");
     GtkWidget *box_anim = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
     gtk_widget_set_halign(box_anim, GTK_ALIGN_CENTER);
-
     switch_anim = gtk_switch_new();
     gtk_switch_set_active(GTK_SWITCH(switch_anim), TRUE);
-
     g_signal_connect(switch_anim, "state-set", G_CALLBACK(on_anim_switch_state_set), NULL);
-
     gtk_box_pack_start(GTK_BOX(box_anim), lbl_settings_anim, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(box_anim), switch_anim, FALSE, FALSE, 0);
 
-    /* Botão Voltar */
+    lbl_settings_vol = gtk_label_new("");
+    scale_vol = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, 1.0, 0.01);
+    gtk_range_set_value(GTK_RANGE(scale_vol), 1.0);
+    gtk_widget_set_size_request(scale_vol, 200, -1);
+    g_signal_connect(scale_vol, "value-changed", G_CALLBACK(on_volume_changed), NULL);
+
+    GtkWidget *box_vol = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    gtk_widget_set_halign(box_vol, GTK_ALIGN_CENTER);
+    gtk_box_pack_start(GTK_BOX(box_vol), lbl_settings_vol, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(box_vol), scale_vol, FALSE, FALSE, 0);
+
     btn_settings_back = gtk_button_new_with_label("");
     g_signal_connect(btn_settings_back, "clicked", G_CALLBACK(go_menu), NULL);
 
-    /* Empacotamento Geral */
     gtk_box_pack_start(GTK_BOX(box), lbl_settings_title, FALSE, FALSE, 0);
-    
     gtk_box_pack_start(GTK_BOX(box), lbl_settings_lang, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(box), box_lang, FALSE, FALSE, 5);
-    
-    gtk_box_pack_start(GTK_BOX(box), box_theme, FALSE, FALSE, 10); 
+    gtk_box_pack_start(GTK_BOX(box), box_theme, FALSE, FALSE, 10);
     gtk_box_pack_start(GTK_BOX(box), box_anim, FALSE, FALSE, 10);
-
-    gtk_box_pack_start(GTK_BOX(box), btn_settings_back, FALSE, FALSE, 20);
+    gtk_box_pack_start(GTK_BOX(box), box_vol, FALSE, FALSE, 10);
+    gtk_box_pack_start(GTK_BOX(box), btn_settings_back, FALSE, FALSE, 25);
 
     return create_box_with_copyright(box);
 }
@@ -386,8 +375,6 @@ GtkWidget* create_credits() {
     return create_box_with_copyright(box);
 }
 
-/* ---------- MAIN ---------- */
-
 int main(int argc, char *argv[]) {
     gtk_init(&argc, &argv);
     resources_load_css();
@@ -395,7 +382,7 @@ int main(int argc, char *argv[]) {
     lang_set(LANG_EN);
 
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    
+
     gtk_window_set_title(GTK_WINDOW(window), "Number Guillotine " BUILD_VERSION);
     gtk_window_set_default_size(GTK_WINDOW(window), 700, 700);
     g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
@@ -404,14 +391,14 @@ int main(int argc, char *argv[]) {
     gtk_stack_set_transition_duration(GTK_STACK(stack), 350);
     gtk_stack_set_transition_type(GTK_STACK(stack), GTK_STACK_TRANSITION_TYPE_SLIDE_LEFT);
     gtk_container_add(GTK_CONTAINER(window), stack);
-    
+
     gtk_stack_add_named(GTK_STACK(stack), create_menu(), "menu");
     gtk_stack_add_named(GTK_STACK(stack), create_settings(), "settings");
     gtk_stack_add_named(GTK_STACK(stack), create_difficulty(), "difficulty");
     gtk_stack_add_named(GTK_STACK(stack), create_game(), "game");
     gtk_stack_add_named(GTK_STACK(stack), create_gameover(), "gameover");
     gtk_stack_add_named(GTK_STACK(stack), create_credits(), "credits");
-    
+
     update_interface_text();
 
     gtk_stack_set_visible_child_name(GTK_STACK(stack), "menu");
