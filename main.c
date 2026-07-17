@@ -24,7 +24,7 @@
 #include "resources.h"
 #include "sfx.h"
 
-#define BUILD_VERSION "v1.5.0"
+#define BUILD_VERSION "v1.5.1"
 
 GtkWidget *window;
 GtkWidget *stack;
