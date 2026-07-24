@@ -24,7 +24,7 @@
 #include "resources.h"
 #include "sfx.h"
 
-#define BUILD_VERSION "v1.5.1"
+#define BUILD_VERSION "v1.5.2"
 
 GtkWidget *window;
 GtkWidget *stack;
@@ -104,7 +104,7 @@ void set_stack_transition(GtkStackTransitionType trans) {
 }
 
 void update_interface_text() {
-    gtk_label_set_text(GTK_LABEL(lbl_menu_title), lang_get(STR_TITLE));
+    gtk_label_set_text(GTK_LABEL(lbl_menu_title), lang_get_title());
     gtk_button_set_label(GTK_BUTTON(btn_menu_play), lang_get(STR_BTN_PLAY));
     gtk_button_set_label(GTK_BUTTON(btn_menu_settings), lang_get(STR_BTN_SETTINGS));
     gtk_button_set_label(GTK_BUTTON(btn_menu_credits), lang_get(STR_BTN_CREDITS));
@@ -139,14 +139,12 @@ void update_interface_text() {
     gtk_label_set_text(GTK_LABEL(label_info), lang_get(STR_GAME_INSTRUCT));
 }
 
-void set_lang_en(GtkWidget *w, gpointer data) {
-    lang_set(LANG_EN);
-    update_interface_text();
-}
-
-void set_lang_pt(GtkWidget *w, gpointer data) {
-    lang_set(LANG_PT);
-    update_interface_text();
+void on_lang_changed(GtkComboBox *combo, gpointer data) {
+    int active_index = gtk_combo_box_get_active(combo);
+    if (active_index != -1) {
+        lang_set((LanguageID)active_index);
+        update_interface_text();
+    }
 }
 
 void go_menu(GtkWidget *w, gpointer data) {
@@ -173,7 +171,7 @@ GtkWidget* create_box_with_copyright(GtkWidget *main_content) {
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
     gtk_box_pack_start(GTK_BOX(vbox), main_content, TRUE, TRUE, 0);
 
-    GtkWidget *lbl_cpy = gtk_label_new(lang_get(STR_COPYRIGHT));
+    GtkWidget *lbl_cpy = gtk_label_new(lang_get_copyright());
     gtk_style_context_add_class(gtk_widget_get_style_context(lbl_cpy), "copyright");
     gtk_widget_set_halign(lbl_cpy, GTK_ALIGN_CENTER);
 
@@ -244,14 +242,19 @@ GtkWidget* create_settings() {
     gtk_style_context_add_class(gtk_widget_get_style_context(lbl_settings_title), "title");
 
     lbl_settings_lang = gtk_label_new("");
+    
     GtkWidget *box_lang = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
     gtk_widget_set_halign(box_lang, GTK_ALIGN_CENTER);
-    GtkWidget *btn_en = gtk_button_new_with_label("English");
-    GtkWidget *btn_pt = gtk_button_new_with_label("Português");
-    g_signal_connect(btn_en, "clicked", G_CALLBACK(set_lang_en), NULL);
-    g_signal_connect(btn_pt, "clicked", G_CALLBACK(set_lang_pt), NULL);
-    gtk_box_pack_start(GTK_BOX(box_lang), btn_en, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(box_lang), btn_pt, FALSE, FALSE, 0);
+    
+    GtkWidget *combo_lang = gtk_combo_box_text_new();
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(combo_lang), "en", "English");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(combo_lang), "pt", "Português");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(combo_lang), "fr", "Français");
+    gtk_combo_box_set_active(GTK_COMBO_BOX(combo_lang), lang_get_current());
+    g_signal_connect(combo_lang, "changed", G_CALLBACK(on_lang_changed), NULL);
+
+    gtk_box_pack_start(GTK_BOX(box_lang), lbl_settings_lang, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(box_lang), combo_lang, FALSE, FALSE, 0);
 
     lbl_settings_theme = gtk_label_new("");
     GtkWidget *box_theme = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
@@ -286,7 +289,6 @@ GtkWidget* create_settings() {
     g_signal_connect(btn_settings_back, "clicked", G_CALLBACK(go_menu), NULL);
 
     gtk_box_pack_start(GTK_BOX(box), lbl_settings_title, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(box), lbl_settings_lang, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(box), box_lang, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(box), box_theme, FALSE, FALSE, 10);
     gtk_box_pack_start(GTK_BOX(box), box_anim, FALSE, FALSE, 10);
@@ -379,7 +381,7 @@ int main(int argc, char *argv[]) {
     gtk_init(&argc, &argv);
     resources_load_css();
 
-    lang_set(LANG_EN);
+    lang_init_from_system();
 
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
