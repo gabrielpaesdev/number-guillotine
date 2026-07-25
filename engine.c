@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <stdio.h>
+#include <sys/random.h>
 #include "lang.h"
 #include "engine.h"
 #include "sfx.h"
@@ -12,11 +13,22 @@ extern GtkWidget *label_tries;
 extern GtkWidget *label_gameover;
 extern GtkWidget *buttons[MAX_NUM+1];
 
-int secret;
+static int secret_masked;
+static int secret_mask;
 int min = 1, max = MAX_NUM;
 int tries_left = 0;
 int active_count = MAX_NUM;
 int current_difficulty_tries = 8;
+
+static void set_secret(int value) {
+    ssize_t r = getrandom(&secret_mask, sizeof(secret_mask), 0);
+    (void)r;
+    secret_masked = value ^ secret_mask;
+}
+
+static int get_secret(void) {
+    return secret_masked ^ secret_mask;
+}
 
 gboolean delayed_victory(gpointer data) {
     play_victory();
@@ -53,7 +65,7 @@ void update_buttons() {
 
     if (active_count == 1) {
         char buf[128];
-        sprintf(buf, lang_get(STR_GAME_LOSE), secret);
+        sprintf(buf, lang_get(STR_GAME_LOSE), get_secret());
         gtk_label_set_text(GTK_LABEL(label_gameover), buf);
         gtk_stack_set_visible_child_name(GTK_STACK(stack), "gameover");
         g_timeout_add(350, delayed_defeat, NULL);
@@ -63,6 +75,7 @@ void update_buttons() {
 void on_number_clicked(GtkWidget *widget, gpointer data) {
     int num = GPOINTER_TO_INT(data);
     tries_left--;
+    int secret = get_secret();
 
     if (num == secret) {
         gtk_label_set_text(GTK_LABEL(label_gameover), lang_get(STR_GAME_WIN));
@@ -95,8 +108,11 @@ void on_number_clicked(GtkWidget *widget, gpointer data) {
 void start_game(int tries) {
     current_difficulty_tries = tries;
 
-    srand(time(NULL));
-    secret = (rand() % MAX_NUM) + 1;
+    unsigned int seed;
+    ssize_t rr = getrandom(&seed, sizeof(seed), 0);
+    (void)rr;
+    srand(seed);
+    set_secret((rand() % MAX_NUM) + 1);
     min = 1;
     max = MAX_NUM;
     tries_left = tries;
