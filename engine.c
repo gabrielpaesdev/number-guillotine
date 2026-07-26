@@ -12,6 +12,7 @@ extern GtkWidget *label_info;
 extern GtkWidget *label_tries;
 extern GtkWidget *label_gameover;
 extern GtkWidget *buttons[MAX_NUM+1];
+extern int is_anim_enabled;
 
 static int secret_masked;
 static int secret_mask;
@@ -33,7 +34,7 @@ static int get_secret(void) {
 }
 
 static int calculate_score(int remaining_tries, int elapsed_sec) {
-    int score = (remaining_tries * 1000) + 5000 - (elapsed_sec * 50);
+int score = (remaining_tries * 1000) + 5000 - (elapsed_sec * 50);
     if (score < 0) {
         score = 0;
     }
@@ -50,21 +51,67 @@ gboolean delayed_defeat(gpointer data) {
     return FALSE;
 }
 
+/* ---- domino-style elimination animation ---- */
+
+static void set_button_eliminated_instant(int i) {
+    GtkWidget *label = gtk_bin_get_child(GTK_BIN(buttons[i]));
+    char buf[16];
+    sprintf(buf, "<s>%d</s>", i);
+    gtk_label_set_markup(GTK_LABEL(label), buf);
+    gtk_widget_set_sensitive(buttons[i], FALSE);
+
+    GtkStyleContext *ctx = gtk_widget_get_style_context(buttons[i]);
+    gtk_style_context_add_class(ctx, "domino-out");
+}
+
+static void set_button_active_instant(int i) {
+    GtkWidget *label = gtk_bin_get_child(GTK_BIN(buttons[i]));
+    char buf[8];
+    sprintf(buf, "%d", i);
+    gtk_label_set_text(GTK_LABEL(label), buf);
+    gtk_widget_set_sensitive(buttons[i], TRUE);
+
+    GtkStyleContext *ctx = gtk_widget_get_style_context(buttons[i]);
+    gtk_style_context_remove_class(ctx, "domino-out");
+}
+
+static gboolean domino_out_cb(gpointer data) {
+    int i = GPOINTER_TO_INT(data);
+    if (i < 1 || i > MAX_NUM) return FALSE;
+
+    GtkWidget *label = gtk_bin_get_child(GTK_BIN(buttons[i]));
+    char buf[16];
+    sprintf(buf, "<s>%d</s>", i);
+    gtk_label_set_markup(GTK_LABEL(label), buf);
+    gtk_widget_set_sensitive(buttons[i], FALSE);
+    gtk_style_context_add_class(gtk_widget_get_style_context(buttons[i]), "domino-out");
+    return FALSE;
+}
+
+
+static void animate_domino_range(int from, int to) {
+    int dir = (to >= from) ? 1 : -1;
+    int count = abs(to - from) + 1;
+
+    int delay_step = 220 / count;
+    if (delay_step < 4) delay_step = 4;
+    if (delay_step > 18) delay_step = 18;
+
+    int idx = 0;
+    for (int i = from; (dir > 0) ? (i <= to) : (i >= to); i += dir) {
+        g_timeout_add(idx * delay_step, domino_out_cb, GINT_TO_POINTER(i));
+        idx++;
+    }
+}
+
 void update_buttons() {
     active_count = 0;
 
     for (int i = 1; i <= MAX_NUM; i++) {
-        GtkWidget *label = gtk_bin_get_child(GTK_BIN(buttons[i]));
-        char buf[64];
-
         if (i < min || i > max) {
-            sprintf(buf, "<s>%d</s>", i);
-            gtk_label_set_markup(GTK_LABEL(label), buf);
-            gtk_widget_set_sensitive(buttons[i], FALSE);
+            set_button_eliminated_instant(i);
         } else {
-            sprintf(buf, "%d", i);
-            gtk_label_set_text(GTK_LABEL(label), buf);
-            gtk_widget_set_sensitive(buttons[i], TRUE);
+            set_button_active_instant(i);
             active_count++;
         }
     }
@@ -90,9 +137,9 @@ void on_number_clicked(GtkWidget *widget, gpointer data) {
     if (num == secret) {
         time_t end_time = time(NULL);
         int elapsed_sec = (int)(end_time - start_time);
-        
+
         int score = calculate_score(tries_left, elapsed_sec);
-        
+
         char buf[256];
         sprintf(buf, "%s\n%s: %d", lang_get(STR_GAME_WIN), lang_get(STR_GAME_SCORE), score);
         gtk_label_set_text(GTK_LABEL(label_gameover), buf);
@@ -101,15 +148,40 @@ void on_number_clicked(GtkWidget *widget, gpointer data) {
         return;
     }
 
+    int old_min = min, old_max = max;
+    int went_lower;
+
     if (num < secret) {
         min = num + 1;
+        went_lower = 1;
         gtk_label_set_text(GTK_LABEL(label_info), lang_get(STR_GAME_BIGGER));
     } else {
         max = num - 1;
+        went_lower = 0;
         gtk_label_set_text(GTK_LABEL(label_info), lang_get(STR_GAME_SMALLER));
     }
 
-    if (tries_left <= 0) {
+    active_count = (max >= min) ? (max - min + 1) : 0;
+
+    char tbuf[64];
+    sprintf(tbuf, lang_get(STR_GAME_TRIES), tries_left);
+    gtk_label_set_text(GTK_LABEL(label_tries), tbuf);
+
+    if (is_anim_enabled) {
+        if (went_lower) {
+            animate_domino_range(num, old_min);
+        } else {
+            animate_domino_range(num, old_max);
+        }
+    } else {
+        if (went_lower) {
+            for (int i = old_min; i <= min - 1; i++) set_button_eliminated_instant(i);
+        } else {
+            for (int i = max + 1; i <= old_max; i++) set_button_eliminated_instant(i);
+        }
+    }
+
+    if (tries_left <= 0 || active_count <= 1) {
         char buf[128];
         sprintf(buf, lang_get(STR_GAME_LOSE), secret);
         gtk_label_set_text(GTK_LABEL(label_gameover), buf);
@@ -119,7 +191,6 @@ void on_number_clicked(GtkWidget *widget, gpointer data) {
     }
 
     play_click();
-    update_buttons();
 }
 
 void start_game(int tries) {
@@ -133,7 +204,7 @@ void start_game(int tries) {
     min = 1;
     max = MAX_NUM;
     tries_left = tries;
-    
+
     start_time = time(NULL);
 
     gtk_label_set_text(GTK_LABEL(label_info), lang_get(STR_GAME_INSTRUCT));
