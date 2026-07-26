@@ -5,6 +5,7 @@ typedef enum {
     LANG_EN = 0,
     LANG_PT,
     LANG_FR,
+    LANG_ES,
     LANG_MAX
 } LanguageID;
 
