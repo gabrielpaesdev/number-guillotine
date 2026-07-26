@@ -23,34 +23,35 @@
 static LanguageID current_lang = LANG_EN;
 
 static const char *strings[STR_COUNT][LANG_MAX] = {
-    {"Play", "Jogar", "Jouer"},
-    {"Settings", "Configurações", "Paramètres"},
-    {"Credits", "Créditos", "Crédits"},
-    {"Exit", "Sair", "Quitter"},
-    {"Choose Difficulty", "Escolha a Dificuldade", "Choisir a Difficulté"},
-    {"Easy (8 tries)", "Fácil (8 tentativas)", "Facile (8 tentatives)"},
-    {"Medium (6 tries)", "Médio (6 tentativas)", "Moyen (6 tentatives)"},
-    {"Hard (4 tries)", "Difícil (4 tentativas)", "Difficile (4 tentatives)"},
-    {"Back", "Voltar", "Retour"},
-    {"Choose a number", "Escolha um número", "Choisissez un nombre"},
-    {"Tries left: %d", "Tentativas restantes: %d", "Tentatives restantes: %d"},
-    {"The number is GREATER", "O número é MAIOR", "Le nombre est PLUS GRAND"},
-    {"The number is SMALLER", "O número é MENOR", "Le nombre est PLUS PETIT"},
-    {"CONGRATS!\nYou Won!", "PARABÉNS!\nVocê venceu!", "FÉLICITATIONS!\nVous avez gagné!"},
-    {"GAME OVER\nThe number was: %d", "GAME OVER\nO número certo era: %d", "GAME OVER\nLe nombre était: %d"},
-    {"Credits", "Créditos", "Crédits"},
+    {"Play", "Jogar", "Jouer", "Jugar"},
+    {"Settings", "Configurações", "Paramètres", "Ajustes"},
+    {"Credits", "Créditos", "Crédits", "Créditos"},
+    {"Exit", "Sair", "Quitter", "Salir"},
+    {"Choose Difficulty", "Escolha a Dificuldade", "Choisir a Difficulté", "Elegir Dificultad"},
+    {"Easy (8 tries)", "Fácil (8 tentativas)", "Facile (8 tentatives)", "Fácil (8 intentos)"},
+    {"Medium (6 tries)", "Médio (6 tentativas)", "Moyen (6 tentatives)", "Medio (6 intentos)"},
+    {"Hard (4 tries)", "Difícil (4 tentativas)", "Difficile (4 tentatives)", "Difícil (4 intentos)"},
+    {"Back", "Voltar", "Retour", "Volver"},
+    {"Choose a number", "Escolha um número", "Choisissez un nombre", "Elige un número"},
+    {"Tries left: %d", "Tentativas restantes: %d", "Tentatives restantes: %d", "Intentos restantes: %d"},
+    {"The number is GREATER", "O número é MAIOR", "Le nombre est PLUS GRAND", "El número es MAYOR"},
+    {"The number is SMALLER", "O número é MENOR", "Le nombre est PLUS PETIT", "El número es MENOR"},
+    {"CONGRATS!\nYou Won!", "PARABÉNS!\nVocê venceu!", "FÉLICITATIONS!\nVous avez gagné!", "¡FELICIDADES!\n¡Ganaste!"},
+    {"GAME OVER\nThe number was: %d", "GAME OVER\nO número certo era: %d", "GAME OVER\nLe nombre était: %d", "GAME OVER\nEl número era: %d"},
+    {"Credits", "Créditos", "Crédits", "Créditos"},
     {
         "Developed by:\nGabriel Paes\n\nContact:\ngabrielpaesdev@proton.me\n\n\nBuild: %s",
         "Desenvolvido por:\nGabriel Paes\n\nContato:\ngabrielpaesdev@proton.me\n\n\nBuild: %s",
-        "Développé por:\nGabriel Paes\n\nContact:\ngabrielpaesdev@proton.me\n\n\nBuild: %s"
+        "Développé por:\nGabriel Paes\n\nContact:\ngabrielpaesdev@proton.me\n\n\nBuild: %s",
+        "Desarrollado por:\nGabriel Paes\n\nContacto:\ngabrielpaesdev@proton.me\n\n\nBuild: %s"
     },
-    {"Settings", "Configurações", "Paramètres"},
-    {"Language", "Idioma", "Langue"},
-    {"Dark Mode", "Modo Escuro", "Mode Sombre"},
-    {"Animations", "Animações", "Animations"},
-    {"Volume", "Volume", "Volume"},
-    {"Play Again", "Jogar Novamente", "Rejouer"},
-    {"Score", "Pontuação", "Score"}
+    {"Settings", "Configurações", "Paramètres", "Ajustes"},
+    {"Language", "Idioma", "Langue", "Idioma"},
+    {"Dark Mode", "Modo Escuro", "Mode Sombre", "Modo Oscuro"},
+    {"Animations", "Animações", "Animations", "Animaciones"},
+    {"Volume", "Volume", "Volume", "Volumen"},
+    {"Play Again", "Jogar Novamente", "Rejouer", "Jugar de Nuevo"},
+    {"Score", "Pontuação", "Score", "Puntuación"}
 };
 
 void lang_set(LanguageID id) {
@@ -85,6 +86,8 @@ void lang_init_from_system(void) {
             current_lang = LANG_PT;
         } else if (strncmp(lang_env, "fr", 2) == 0) {
             current_lang = LANG_FR;
+        } else if (strncmp(lang_env, "es", 2) == 0) {
+            current_lang = LANG_ES;
         } else {
             current_lang = LANG_EN;
         }
