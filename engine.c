@@ -15,6 +15,8 @@ extern GtkWidget *buttons[MAX_NUM+1];
 
 static int secret_masked;
 static int secret_mask;
+static time_t start_time;
+
 int min = 1, max = MAX_NUM;
 int tries_left = 0;
 int active_count = MAX_NUM;
@@ -28,6 +30,14 @@ static void set_secret(int value) {
 
 static int get_secret(void) {
     return secret_masked ^ secret_mask;
+}
+
+static int calculate_score(int remaining_tries, int elapsed_sec) {
+    int score = (remaining_tries * 1000) + 5000 - (elapsed_sec * 50);
+    if (score < 0) {
+        score = 0;
+    }
+    return score;
 }
 
 gboolean delayed_victory(gpointer data) {
@@ -78,7 +88,14 @@ void on_number_clicked(GtkWidget *widget, gpointer data) {
     int secret = get_secret();
 
     if (num == secret) {
-        gtk_label_set_text(GTK_LABEL(label_gameover), lang_get(STR_GAME_WIN));
+        time_t end_time = time(NULL);
+        int elapsed_sec = (int)(end_time - start_time);
+        
+        int score = calculate_score(tries_left, elapsed_sec);
+        
+        char buf[256];
+        sprintf(buf, "%s\n%s: %d", lang_get(STR_GAME_WIN), lang_get(STR_GAME_SCORE), score);
+        gtk_label_set_text(GTK_LABEL(label_gameover), buf);
         gtk_stack_set_visible_child_name(GTK_STACK(stack), "gameover");
         g_timeout_add(350, delayed_victory, NULL);
         return;
@@ -116,6 +133,8 @@ void start_game(int tries) {
     min = 1;
     max = MAX_NUM;
     tries_left = tries;
+    
+    start_time = time(NULL);
 
     gtk_label_set_text(GTK_LABEL(label_info), lang_get(STR_GAME_INSTRUCT));
     update_buttons();
