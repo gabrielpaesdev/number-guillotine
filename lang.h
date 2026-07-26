@@ -32,6 +32,7 @@ typedef enum {
     STR_SETTINGS_ANIM,
     STR_SETTINGS_VOL,
     STR_BTN_PLAY_AGAIN,
+    STR_GAME_SCORE,
     STR_COUNT
 } StringID;
 
