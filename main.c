@@ -24,7 +24,7 @@
 #include "resources.h"
 #include "sfx.h"
 
-#define BUILD_VERSION "v1.5.2"
+#define BUILD_VERSION "v1.6.0"
 
 GtkWidget *window;
 GtkWidget *stack;
@@ -79,6 +79,16 @@ void update_theme_style() {
     }
 }
 
+void update_anim_style() {
+    GtkStyleContext *context = gtk_widget_get_style_context(window);
+
+    if (is_anim_enabled) {
+        gtk_style_context_remove_class(context, "no-anim");
+    } else {
+        gtk_style_context_add_class(context, "no-anim");
+    }
+}
+
 gboolean on_theme_switch_state_set(GtkSwitch *widget, gboolean state, gpointer data) {
     is_dark_mode = state;
     update_theme_style();
@@ -87,6 +97,7 @@ gboolean on_theme_switch_state_set(GtkSwitch *widget, gboolean state, gpointer d
 
 gboolean on_anim_switch_state_set(GtkSwitch *widget, gboolean state, gpointer data) {
     is_anim_enabled = state;
+    update_anim_style();
     return FALSE;
 }
 
@@ -242,14 +253,15 @@ GtkWidget* create_settings() {
     gtk_style_context_add_class(gtk_widget_get_style_context(lbl_settings_title), "title");
 
     lbl_settings_lang = gtk_label_new("");
-    
+
     GtkWidget *box_lang = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
     gtk_widget_set_halign(box_lang, GTK_ALIGN_CENTER);
-    
+
     GtkWidget *combo_lang = gtk_combo_box_text_new();
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(combo_lang), "en", "English");
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(combo_lang), "pt", "Português");
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(combo_lang), "fr", "Français");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(combo_lang), "es", "Español");
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo_lang), lang_get_current());
     g_signal_connect(combo_lang, "changed", G_CALLBACK(on_lang_changed), NULL);
 
@@ -318,6 +330,7 @@ GtkWidget* create_game() {
         GtkWidget *btn = gtk_button_new_with_label(buf);
         buttons[i] = btn;
 
+        gtk_style_context_add_class(gtk_widget_get_style_context(btn), "num-btn");
         gtk_widget_set_size_request(btn, 50, 40);
 
         g_signal_connect(btn, "clicked", G_CALLBACK(on_number_clicked),
