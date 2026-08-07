@@ -171,9 +171,6 @@ void go_menu(GtkWidget *w, gpointer data) {
 }
 
 void on_settings_back(GtkWidget *w, gpointer data) {
-    /* Persist settings immediately when leaving the Settings screen, rather
-     * than waiting for app quit. This means changes survive Ctrl+C, crashes,
-     * or anything else that skips the normal "destroy" shutdown path. */
     config_save(lang_get_current(), is_dark_mode, is_anim_enabled, sfx_get_volume());
     go_menu(w, data);
 }
