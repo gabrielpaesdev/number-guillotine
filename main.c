@@ -23,8 +23,9 @@
 #include "engine.h"
 #include "resources.h"
 #include "sfx.h"
+#include "config.h"
 
-#define BUILD_VERSION "v1.6.0"
+#define BUILD_VERSION "v1.6.1"
 
 GtkWidget *window;
 GtkWidget *stack;
@@ -68,6 +69,7 @@ int is_anim_enabled = 1;
 
 void update_interface_text();
 void go_menu(GtkWidget *w, gpointer data);
+void on_settings_back(GtkWidget *w, gpointer data);
 
 void update_theme_style() {
     GtkStyleContext *context = gtk_widget_get_style_context(window);
@@ -104,6 +106,11 @@ gboolean on_anim_switch_state_set(GtkSwitch *widget, gboolean state, gpointer da
 void on_volume_changed(GtkRange *range, gpointer data) {
     double val = gtk_range_get_value(range);
     sfx_set_volume(val);
+}
+
+void on_app_quit(GtkWidget *w, gpointer data) {
+    config_save(lang_get_current(), is_dark_mode, is_anim_enabled, sfx_get_volume());
+    gtk_main_quit();
 }
 
 void set_stack_transition(GtkStackTransitionType trans) {
@@ -163,6 +170,14 @@ void go_menu(GtkWidget *w, gpointer data) {
     gtk_stack_set_visible_child_name(GTK_STACK(stack), "menu");
 }
 
+void on_settings_back(GtkWidget *w, gpointer data) {
+    /* Persist settings immediately when leaving the Settings screen, rather
+     * than waiting for app quit. This means changes survive Ctrl+C, crashes,
+     * or anything else that skips the normal "destroy" shutdown path. */
+    config_save(lang_get_current(), is_dark_mode, is_anim_enabled, sfx_get_volume());
+    go_menu(w, data);
+}
+
 void go_credits(GtkWidget *w, gpointer data) {
     set_stack_transition(GTK_STACK_TRANSITION_TYPE_SLIDE_LEFT);
     gtk_stack_set_visible_child_name(GTK_STACK(stack), "credits");
@@ -206,7 +221,7 @@ GtkWidget* create_menu() {
     g_signal_connect(btn_menu_play, "clicked", G_CALLBACK(go_difficulty), NULL);
     g_signal_connect(btn_menu_settings, "clicked", G_CALLBACK(go_settings), NULL);
     g_signal_connect(btn_menu_credits, "clicked", G_CALLBACK(go_credits), NULL);
-    g_signal_connect(btn_menu_exit, "clicked", G_CALLBACK(gtk_main_quit), NULL);
+    g_signal_connect_swapped(btn_menu_exit, "clicked", G_CALLBACK(gtk_widget_destroy), window);
 
     gtk_box_pack_start(GTK_BOX(box), lbl_menu_title, FALSE, FALSE, 10);
     gtk_box_pack_start(GTK_BOX(box), btn_menu_play, FALSE, FALSE, 0);
@@ -298,7 +313,7 @@ GtkWidget* create_settings() {
     gtk_box_pack_start(GTK_BOX(box_vol), scale_vol, FALSE, FALSE, 0);
 
     btn_settings_back = gtk_button_new_with_label("");
-    g_signal_connect(btn_settings_back, "clicked", G_CALLBACK(go_menu), NULL);
+    g_signal_connect(btn_settings_back, "clicked", G_CALLBACK(on_settings_back), NULL);
 
     gtk_box_pack_start(GTK_BOX(box), lbl_settings_title, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(box), box_lang, FALSE, FALSE, 5);
@@ -396,11 +411,22 @@ int main(int argc, char *argv[]) {
 
     lang_init_from_system();
 
+    LanguageID cfg_lang = lang_get_current();
+    int cfg_dark = is_dark_mode;
+    int cfg_anim = is_anim_enabled;
+    double cfg_vol = sfx_get_volume();
+    config_load(&cfg_lang, &cfg_dark, &cfg_anim, &cfg_vol);
+
+    lang_set(cfg_lang);
+    is_dark_mode = cfg_dark;
+    is_anim_enabled = cfg_anim;
+    sfx_set_volume(cfg_vol);
+
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
     gtk_window_set_title(GTK_WINDOW(window), "Number Guillotine " BUILD_VERSION);
     gtk_window_set_default_size(GTK_WINDOW(window), 700, 700);
-    g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    g_signal_connect(window, "destroy", G_CALLBACK(on_app_quit), NULL);
 
     stack = gtk_stack_new();
     gtk_stack_set_transition_duration(GTK_STACK(stack), 350);
@@ -413,6 +439,12 @@ int main(int argc, char *argv[]) {
     gtk_stack_add_named(GTK_STACK(stack), create_game(), "game");
     gtk_stack_add_named(GTK_STACK(stack), create_gameover(), "gameover");
     gtk_stack_add_named(GTK_STACK(stack), create_credits(), "credits");
+
+    gtk_switch_set_active(GTK_SWITCH(switch_theme), is_dark_mode);
+    gtk_switch_set_active(GTK_SWITCH(switch_anim), is_anim_enabled);
+    gtk_range_set_value(GTK_RANGE(scale_vol), cfg_vol);
+    update_theme_style();
+    update_anim_style();
 
     update_interface_text();
 

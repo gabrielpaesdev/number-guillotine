@@ -10,6 +10,10 @@ void sfx_set_volume(double vol) {
     master_volume = vol;
 }
 
+double sfx_get_volume(void) {
+    return master_volume;
+}
+
 void play_tone(FILE *out, double freq, double duration) {
     int total_samples = (int)(SAMPLE_RATE * duration);
     double step = (freq * PI_2) / SAMPLE_RATE;

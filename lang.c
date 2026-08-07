@@ -42,7 +42,7 @@ static const char *strings[STR_COUNT][LANG_MAX] = {
     {
         "Developed by:\nGabriel Paes\n\nContact:\ngabrielpaesdev@proton.me\n\n\nBuild: %s",
         "Desenvolvido por:\nGabriel Paes\n\nContato:\ngabrielpaesdev@proton.me\n\n\nBuild: %s",
-        "Développé por:\nGabriel Paes\n\nContact:\ngabrielpaesdev@proton.me\n\n\nBuild: %s",
+        "Développé par:\nGabriel Paes\n\nContact:\ngabrielpaesdev@proton.me\n\n\nBuild: %s",
         "Desarrollado por:\nGabriel Paes\n\nContacto:\ngabrielpaesdev@proton.me\n\n\nBuild: %s"
     },
     {"Settings", "Configurações", "Paramètres", "Ajustes"},
