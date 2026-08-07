@@ -22,8 +22,7 @@
 #define CONFIG_APP_DIR "number-guillotine"
 #define CONFIG_FILE_NAME "config.ini"
 
-/* Builds ~/.config/number-guillotine/config.ini (or $XDG_CONFIG_HOME/...)
- * and makes sure the directory exists. Caller owns the returned string. */
+
 static gchar *config_get_path(void) {
     gchar *dir = g_build_filename(g_get_user_config_dir(), CONFIG_APP_DIR, NULL);
     g_mkdir_with_parents(dir, 0700);
@@ -56,8 +55,7 @@ void config_load(LanguageID *language, int *dark_mode, int *anim_enabled, double
         if (!err) *volume = vol;
         g_clear_error(&err);
     }
-    /* If the file doesn't exist yet (first run), the caller's defaults
-     * passed in by reference are simply left untouched. */
+
 
     g_key_file_free(kf);
     g_free(path);
